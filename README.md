@@ -18,6 +18,13 @@ I realize that the tools I used are more suitable for big data. At the scale of 
 ![Screenshot](Headlines_architecture.png)
 
 Steps:
-1. 
+1. Wrote Lambda function to collect raw data from the NewsAPI. The raw data is transformed from json format and saved as csv on S3 bucket. The function uses boto3, pandas and NewsApiClient libraries. We have to zip those libraries and import them as Layers.
+2. Set EventBridge event to trigger the lambda function everyday at 12.00 BST time.
+3. Configured Redshift workgroup and namespace for 'news' table.
+4. Configured VPC and security groups for Glue, S3 and Redshift.
+5. Set Glue Job using PySpark and Glue Spark Shell for data extraction, cleaning and transformation.
+6. Add VPC endpoint to the VPC configuration to save Glue Dynamic Frame temporarly on S3 and then to Redshift table.
+7. Configured security groups once again to allow Quicksight the access to Redshift.
+8. Visualize the data.
 
-![Screenshot](Summary_dashboard.pdf)
+![Dashboard](Summary_dashboard.pdf)

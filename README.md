@@ -17,3 +17,7 @@ I realize that the tools I used are more suitable for big data. At the scale of 
 
 ![Screenshot](Headlines_architecture.png)
 
+Steps:
+1. 
+
+![Screenshot](Summary_dashboard.pdf)

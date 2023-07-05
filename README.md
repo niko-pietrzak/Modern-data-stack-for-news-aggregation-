@@ -15,5 +15,5 @@ Tools and services used:
 
 I realize that the tools I used are more suitable for big data. At the scale of the data used, I could use RDS instead of Redshift and Lambda instead of Glue, and I would not lose performance. In fact, I would save some money. I chose these tools in order to become more familiar with them. In addition, it allows better scaling in the current configuration. 
 
-![alt text](http://url/to/img.png](https://github.com/niko-pietrzak/News-aggregation-system-on-AWS/blob/main/AWS_Architecture.png)https://github.com/niko-pietrzak/News-aggregation-system-on-AWS/blob/main/AWS_Architecture.png)
+![Screenshot](Headlines_architecture.png)
 

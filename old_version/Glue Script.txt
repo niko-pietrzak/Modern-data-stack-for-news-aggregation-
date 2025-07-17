@@ -1,0 +1,74 @@
+import sys
+from awsglue.transforms import *
+from awsglue.utils import getResolvedOptions
+from pyspark.context import SparkContext
+from awsglue.context import GlueContext
+from awsglue.job import Job
+  
+sc = SparkContext.getOrCreate()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+job = Job(glueContext)
+
+# Import additional libraries
+import datetime as dt
+from datetime import datetime
+from pyspark.sql.functions import initcap, col, when, lit
+from awsglue.dynamicframe import DynamicFrame
+
+# Set directory path pased on current date
+currentWeek = dt.datetime.now().isocalendar()[1]
+currentYear = datetime.now().year
+key_string = 'newsapi_raw_{}_w{}'.format(currentYear, currentWeek)
+directory_path = "s3://news-data-lake/inputs/{}/".format(key_string)
+
+# Create DynamicFrame from Glue Data Catalog
+raw_news = glueContext.create_dynamic_frame.from_options(
+    "s3",
+    {
+        "paths": [
+            directory_path
+        ],
+        "recurse":True,
+        "groupFiles":"inPartition"
+    },
+    "csv",
+    {"withHeader": True},
+)
+
+# Transform Dynamic DataFrame to Spark Data Frame
+news_spark = raw_news.toDF()
+
+
+# Transform the data
+news_spark = news_spark.select("*", initcap(col('category')))
+news_spark = news_spark.na.replace(['us', 'gb'], ['United States', 'Great Britain'], 'country')
+news_spark = news_spark.drop(news_spark.category)
+news_spark = news_spark.withColumnRenamed('sourceName', 'source_name')\
+    .withColumnRenamed('initcap(category)', 'category')\
+    .withColumnRenamed('urlToImage', 'image_url')\
+    .withColumnRenamed('publishedAt', 'published_at')
+    
+news_spark=news_spark.select([when(col(c)=="","No Data").otherwise(col(c)).alias(c) for c in news_spark.columns])
+
+
+# Transform back Spark Data Frame to Dynamic Data Frame
+news_dfy = DynamicFrame.fromDF(news_spark, glueContext, "convert")
+
+# Setting correct data try:
+news_dfy = news_dfy.resolveChoice(specs = [('published_at', 'cast:timestamp')])
+
+# Script generated for node Amazon Redshift
+AmazonRedshift_node3 = glueContext.write_dynamic_frame.from_options(
+    frame=news_dfy,
+    connection_type="redshift",
+    connection_options={
+        "redshiftTmpDir": "s3://aws-glue-assets-597570747370-eu-central-1/temporary/",
+        "useConnectionProperties": "true",
+        "dbtable": "public.news",
+        "connectionName": "glue-redshift-connector"
+    },
+    transformation_ctx="AmazonRedshift_node3"
+)
+		
+job.commit()

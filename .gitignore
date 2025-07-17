@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+
+# Airflow
+logs/
+dags/__pycache__/
+airflow.db
+
+# Secrets
+.env
+
+# dbt
+dbt/dbt_packages/
+dbt/target/
+
+# OS junk
+.DS_Store

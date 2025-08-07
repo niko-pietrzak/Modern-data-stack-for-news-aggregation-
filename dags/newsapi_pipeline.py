@@ -5,6 +5,7 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.providers.amazon.aws.operators.redshift_data import RedshiftDataOperator
+from airflow.providers.dbt.cloud.operators.dbt import DbtCloudRunJobOperator
 from datetime import datetime, timedelta
 
 sys.path.append('/opt/airflow/scripts')
@@ -19,9 +20,11 @@ REDSHIFT_IAM_ROLE = os.getenv('REDSHIFT_IAM_ROLE')
 REDSHIFT_DATABASE = os.getenv('REDSHIFT_DATABASE')
 REDSHIFT_WORKGROUP= os.getenv('REDSHIFT_WORKGROUP')
 REDSHIFT_TABLE= os.getenv('REDSHIFT_TABLE')
-REDSHIFT_REGION= os.getenv('REDSHIFT_REGION')
 EMAIL = os.getenv('EMAIL')
 LOCAL_FILEPATH = os.getenv('LOCAL_FILEPATH')
+
+DBT_CLOUD_JOB_ID = os.getenv('DBT_CLOUD_JOB_ID')
+DBT_CLOUD_CONN_ID = 'dbt_cloud_default'
 
 default_args = {
     'owner': 'airflow',
@@ -63,22 +66,51 @@ with DAG(
     copy_to_redshift = RedshiftDataOperator(
         task_id='copy_data_to_redshift',
         database=REDSHIFT_DATABASE,
-        region=REDSHIFT_REGION,
+        region='us-east-1',
         workgroup_name=REDSHIFT_WORKGROUP,
         sql=f"""
-        COPY {REDSHIFT_TABLE}
+        COPY public.newsapi_articles
         FROM 's3://{S3_BUCKET}/{S3_KEY}'
         IAM_ROLE '{REDSHIFT_IAM_ROLE}'
-        REGION '{REDSHIFT_REGION}'
+        REGION 'us-east-1'
         FORMAT AS JSON 'auto'
         TIMEFORMAT 'auto';
         """
     )
 
-    fetch_task >> copy_to_redshift
 
+    dbt_run = DbtCloudRunJobOperator(
+        task_id='dbt_run',
+        job_id=DBT_CLOUD_JOB_ID,
+        dbt_cloud_conn_id=DBT_CLOUD_CONN_ID,
+        check_interval=60,
+        timeout=300,
+        additional_run_config={
+            "steps_override": ["dbt run"]
+        }
+    )
 
-    # run_dbt = BashOperator(
-    #     task_id='run_dbt_models',
-    #     bash_command='cd /opt/airflow/dbt/newsapi_dbt && dbt run'
+    
+    # dbt_test = DbtCloudRunJobOperator(
+    #     task_id='dbt_test',
+    #     job_id=DBT_CLOUD_JOB_ID,
+    #     dbt_cloud_conn_id=DBT_CLOUD_CONN_ID,
+    #     check_interval=60,
+    #     timeout=300,
+    #     additional_run_config={
+    #         "steps_override": ["dbt test"]
+    #     }
     # )
+
+    # dbt_docs = DbtCloudRunJobOperator(
+    #     task_id='dbt_docs_generate',
+    #     job_id=DBT_CLOUD_JOB_ID,
+    #     dbt_cloud_conn_id=DBT_CLOUD_CONN_ID,
+    #     check_interval=60,
+    #     timeout=300,
+    #     additional_run_config={
+    #         "steps_override": ["dbt docs generate"]
+    #     }
+    # )
+
+    fetch_task >> copy_to_redshift >> dbt_run

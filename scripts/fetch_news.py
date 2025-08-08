@@ -3,8 +3,7 @@ import requests
 from datetime import datetime
 import re
 
-#def fetch_newsapi_data(api_key, countries=['us', 'gb'], categories=['technology', 'business', 'science', 'health', 'sports']):
-def fetch_newsapi_data(api_key, countries=['us'], categories=['technology', 'business']):
+def fetch_newsapi_data(api_key, countries=['us', 'gb'], categories=['technology', 'business', 'science', 'health', 'sports']):
     """
     Fetches top headlines from NewsAPI for multiple countries and categories.
     """

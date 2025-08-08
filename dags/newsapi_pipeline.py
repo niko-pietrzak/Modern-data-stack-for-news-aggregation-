@@ -5,7 +5,7 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.providers.amazon.aws.operators.redshift_data import RedshiftDataOperator
-#from airflow.providers.dbt.cloud.operators.dbt import DbtCloudRunJobOperator
+from airflow.providers.dbt.cloud.operators.dbt import DbtCloudRunJobOperator
 from datetime import datetime, timedelta
 
 sys.path.append('/opt/airflow/scripts')
@@ -79,38 +79,27 @@ with DAG(
     )
 
 
-    # dbt_run = DbtCloudRunJobOperator(
-    #     task_id='dbt_run',
-    #     job_id=DBT_CLOUD_JOB_ID,
-    #     dbt_cloud_conn_id=DBT_CLOUD_CONN_ID,
-    #     check_interval=60,
-    #     timeout=300,
-    #     additional_run_config={
-    #         "steps_override": ["dbt run"]
-    #     }
-    # )
+    dbt_run = DbtCloudRunJobOperator(
+        task_id='dbt_run',
+        job_id=DBT_CLOUD_JOB_ID,
+        dbt_cloud_conn_id=DBT_CLOUD_CONN_ID,
+        check_interval=60,
+        timeout=300,
+        additional_run_config={
+            "steps_override": ["dbt run"]
+        }
+    )
 
     
-    # dbt_test = DbtCloudRunJobOperator(
-    #     task_id='dbt_test',
-    #     job_id=DBT_CLOUD_JOB_ID,
-    #     dbt_cloud_conn_id=DBT_CLOUD_CONN_ID,
-    #     check_interval=60,
-    #     timeout=300,
-    #     additional_run_config={
-    #         "steps_override": ["dbt test"]
-    #     }
-    # )
-
-    # dbt_docs = DbtCloudRunJobOperator(
-    #     task_id='dbt_docs_generate',
-    #     job_id=DBT_CLOUD_JOB_ID,
-    #     dbt_cloud_conn_id=DBT_CLOUD_CONN_ID,
-    #     check_interval=60,
-    #     timeout=300,
-    #     additional_run_config={
-    #         "steps_override": ["dbt docs generate"]
-    #     }
-    # )
-
-    fetch_task >> copy_to_redshift
+    dbt_test = DbtCloudRunJobOperator(
+        task_id='dbt_test',
+        job_id=DBT_CLOUD_JOB_ID,
+        dbt_cloud_conn_id=DBT_CLOUD_CONN_ID,
+        check_interval=60,
+        timeout=300,
+        additional_run_config={
+            "steps_override": ["dbt test"]
+        }
+    )
+    
+    fetch_task >> copy_to_redshift >> dbt_run >> dbt_test

@@ -1,4 +1,7 @@
-# News-aggregation-system-on-AWS
+# Modern data stack for news aggregation
+
+I took my first data project done entirely on AWS and adjusted him to use modern data stack: DWH (Redshift), Airflow Orchestration, DBT Cloud.
+
 How to run this:
 1. Prepare infrastructure: s3 buckets, redshift cluster, roles, permission, schemas, table for data
 

@@ -2,7 +2,9 @@
 How to run this:
 1. Prepare infrastructure: s3 buckets, redshift cluster, roles, permission, schemas, table for data
 
-2. Create and fill .env file, as follows:
+2. Configure models in Dbt Cloud with necessary aws/redshift configuration.
+
+3. Create and fill .env file, as follows:
 
         # Airflow variables
         AIRFLOW__CORE__LOAD_EXAMPLES=False
@@ -26,13 +28,17 @@ How to run this:
         LOCAL_FILEPATH=/tmp/news_data.json
         EMAIL=<your-email-for-airflow-notifications>
 
-3. docker-compose build, docker-compose up -d
-4. Create airflow user in airflow-webserver container:
+        # DBT
+        DBT_CLOUD_JOB_ID=<your-dbt-job-with-dbt-run-and-test>
+
+4. docker-compose build, docker-compose up -d
+5. Create airflow user in airflow-webserver container:
     airflow users create \
 		--username admin \
 		--firstname Admin \
 		--lastname User \
 		--role Admin \
-		--email nikodem4799@gmail.com \
+		--email mail@gmail.com \
 		--password admin
-4. Prepare 'aws_default' connection with created for Airflow user that has access to Redshift / S3.
+6. Create AWS User for Airflow with Redshift / S3 permissions
+7. Configure 'aws_default' connection.
